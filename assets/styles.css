@@ -968,6 +968,14 @@ kbd {
 .keys dd { margin: 0; }
 
 .dialog-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.dialog-actions--top { margin-top: 14px; }
+
+.fineprint code {
+  font: 500 10.5px/1.4 var(--mono);
+  background: var(--stone);
+  padding: 1px 4px;
+  border-radius: 2px;
+}
 
 .dialog-foot {
   display: flex;

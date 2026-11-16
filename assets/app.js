@@ -53,6 +53,7 @@
     dialog: $('#dialog'),
     prefAuto: $('#pref-auto'),
     prefFocus: $('#pref-focus'),
+    adWindow: $('#btn-ad-window'),
     reset: $('#btn-reset'),
     wipe: $('#btn-wipe'),
     finish: $('#finish'),
@@ -653,6 +654,13 @@
 
   el.settings.addEventListener('click', openDialog);
   el.prefAuto.addEventListener('change', function () { setAuto(el.prefAuto.checked); });
+
+  if (el.adWindow) {
+    el.adWindow.addEventListener('click', function () {
+      el.dialog.close();
+      openInWindow();
+    });
+  }
   if (el.prefFocus) {
     el.prefFocus.addEventListener('change', function () {
       state.prefs.focus = el.prefFocus.checked;
