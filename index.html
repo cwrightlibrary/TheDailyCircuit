@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Daily Circuit — 17 daily games, one tab</title>
+<meta name="description" content="A single page that runs through seventeen daily games in order, with back and next controls instead of seventeen open tabs.">
+<meta name="color-scheme" content="light">
+<meta name="theme-color" content="#e8e7e0">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..125,400..800&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+
+<div class="grain" aria-hidden="true"></div>
+
+<header class="masthead">
+  <div class="mast-left">
+    <h1 class="wordmark">The Daily <span class="mark">Circuit</span></h1>
+    <p class="kicker" id="dateline">Daily edition</p>
+  </div>
+  <div class="mast-right">
+    <div class="readout">
+      <span class="readout-num" id="tally">00</span><span class="readout-of">/17</span>
+      <span class="readout-label">done</span>
+    </div>
+    <div class="readout readout--time">
+      <span class="readout-num readout-clock" id="clock">0:00</span>
+      <span class="readout-label">run</span>
+    </div>
+    <button class="btn btn--icon btn--settings" id="btn-settings" aria-label="Setup and keyboard shortcuts" title="Setup &amp; shortcuts (?)">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
+        <circle cx="12" cy="12" r="3.1"></circle>
+        <path d="M12 2.6v2.3M12 19.1v2.3M21.4 12h-2.3M4.9 12H2.6M18.6 5.4l-1.6 1.6M7 17l-1.6 1.6M18.6 18.6 17 17M7 7 5.4 5.4"></path>
+      </svg>
+    </button>
+  </div>
+</header>
+
+<nav class="rail" aria-label="Jump to a game">
+  <ol id="rail"></ol>
+</nav>
+
+<main class="stage" id="stage">
+  <div class="stage-head">
+    <button class="btn btn--nav" id="btn-prev" aria-label="Previous game">
+      <span aria-hidden="true">←</span><span class="btn-word">Back</span>
+    </button>
+
+    <div class="stage-title">
+      <div class="stage-title-row">
+        <span class="stage-no" id="stage-no">01</span>
+        <h2 id="stage-name">Loading</h2>
+        <span class="chip" id="stage-tag" hidden></span>
+        <span class="stage-time" id="stage-time">0:00</span>
+      </div>
+      <p class="stage-note">
+        <span id="stage-note"></span>
+        <span class="sep" aria-hidden="true">/</span>
+        <span id="stage-host" class="stage-host"></span>
+      </p>
+    </div>
+
+    <div class="stage-tools">
+      <div class="seg" role="group" aria-label="Frame width">
+        <button type="button" data-width="fit" title="Fit the window (W)">Fit</button>
+        <button type="button" data-width="narrow" title="Narrow column (W)">Narrow</button>
+        <button type="button" data-width="wide" title="Edge to edge (W)">Wide</button>
+      </div>
+      <button class="btn btn--icon" id="btn-reload" aria-label="Reload game" title="Reload (R)">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.2 12a8.2 8.2 0 1 1-2.4-5.8"/><path d="M20.2 3.9v4.6h-4.6"/></svg>
+      </button>
+      <button class="btn btn--icon" id="btn-open" aria-label="Open game in its own window" title="Open in a window (O)">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.6 16.4 16.6 7.4"/><path d="M9.4 7.4h7.2v7.2"/></svg>
+      </button>
+      <button class="btn btn--icon" id="btn-mode" aria-label="Switch between embedded and separate window" title="Embedded / window (E)">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.2" y="3.2" width="12.4" height="12.4" rx="0.6"/><path d="M8.4 20.8h12.4V8.4H8.4z"/></svg>
+      </button>
+    </div>
+
+    <button class="btn btn--go" id="btn-next">
+      <span class="btn-word">Next</span>
+      <span class="btn-next-name" id="next-name"></span>
+      <span aria-hidden="true">→</span>
+    </button>
+  </div>
+
+  <div class="frame-shell" id="frame-shell">
+    <iframe
+      id="game-frame"
+      title="Game"
+      src="about:blank"
+      allow="fullscreen; clipboard-write; autoplay; gamepad; encrypted-media"
+      referrerpolicy="strict-origin-when-cross-origin"></iframe>
+
+    <div class="launchpad" id="launchpad" hidden>
+      <div class="launch-card">
+        <p class="launch-kicker">Separate window</p>
+        <h3 class="launch-name" id="launch-name"></h3>
+        <p class="launch-note" id="launch-note"></p>
+        <button class="btn btn--primary" id="btn-launch">Open</button>
+        <p class="launch-auto">
+          Auto-next when that window closes:
+          <button type="button" class="linklike" id="btn-auto-inline">on</button>
+        </p>
+      </div>
+    </div>
+
+    <div class="loader" id="loader" hidden>
+      <span class="loader-bar"><i></i></span>
+      <p class="loader-text">Loading <span id="loader-host"></span>…</p>
+    </div>
+  </div>
+
+  <div class="stage-foot">
+    <p class="foot-hint">
+      <kbd>←</kbd><kbd>→</kbd> move
+      <span class="sep" aria-hidden="true">/</span> <kbd>O</kbd> open
+      <span class="sep" aria-hidden="true">/</span> <kbd>F</kbd> focus
+      <span class="sep" aria-hidden="true">/</span> <kbd>?</kbd> keys
+    </p>
+    <button class="auto-pill" id="auto-pill" aria-pressed="true">
+      <span class="auto-dot" aria-hidden="true"></span>
+      <span id="auto-text">Auto-next on</span>
+    </button>
+  </div>
+</main>
+
+<section class="finish" id="finish" hidden>
+  <div class="finish-inner">
+    <p class="finish-kicker">Round complete</p>
+    <h2 class="finish-title">Seventeen down.</h2>
+    <p class="finish-clock" id="finish-time">0:00</p>
+    <p class="finish-meta" id="finish-date"></p>
+    <ol class="stamps" id="stamps"></ol>
+    <div class="finish-actions">
+      <button class="btn btn--go" id="btn-again"><span class="btn-word">Run it again</span> <span aria-hidden="true">→</span></button>
+      <button class="btn" id="btn-share">Copy summary</button>
+      <button class="btn btn--ghost" id="btn-back">Back to the games</button>
+    </div>
+  </div>
+</section>
+
+<dialog id="dialog" class="dialog" aria-labelledby="dialog-title">
+  <div class="dialog-inner">
+    <header class="dialog-head">
+      <h2 id="dialog-title">Setup &amp; shortcuts</h2>
+      <form method="dialog"><button class="btn btn--icon" aria-label="Close">✕</button></form>
+    </header>
+
+    <section class="dialog-section">
+      <h3>Moving on</h3>
+      <label class="check">
+        <input type="checkbox" id="pref-auto">
+        <span>
+          <strong>Auto-next when a game window closes</strong>
+          <em>For the games that open in their own window (the two NYT ones), closing that window marks the round done and moves to the next game.</em>
+        </span>
+      </label>
+      <label class="check check--second">
+        <input type="checkbox" id="pref-focus">
+        <span>
+          <strong>Focus mode</strong>
+          <em>Hide everything but the game and the arrows. Press <kbd>F</kbd> to toggle from anywhere.</em>
+        </span>
+      </label>
+      <p class="fineprint">
+        Embedded games live on other domains, so the browser will not let this page see whether
+        you have finished one. Embedded rounds advance when you press <kbd>→</kbd> — one keystroke
+        instead of a tab hunt.
+      </p>
+    </section>
+
+    <section class="dialog-section">
+      <h3>Keyboard</h3>
+      <dl class="keys">
+        <dt><kbd>→</kbd> / <kbd>N</kbd></dt><dd>Next game (ticks this one off)</dd>
+        <dt><kbd>←</kbd> / <kbd>P</kbd></dt><dd>Previous game</dd>
+        <dt><kbd>O</kbd></dt><dd>Open this game in a window</dd>
+        <dt><kbd>E</kbd></dt><dd>Switch embedded / window</dd>
+        <dt><kbd>R</kbd></dt><dd>Reload the game</dd>
+        <dt><kbd>W</kbd></dt><dd>Cycle frame width</dd>
+        <dt><kbd>F</kbd></dt><dd>Focus mode</dd>
+        <dt><kbd>1</kbd>–<kbd>9</kbd></dt><dd>Jump to game 1–9</dd>
+        <dt><kbd>Esc</kbd></dt><dd>Close this panel</dd>
+      </dl>
+      <p class="fineprint">Keys work when this page has focus. Click the page background if a game has captured the keyboard.</p>
+    </section>
+
+    <section class="dialog-section">
+      <h3>This run</h3>
+      <div class="dialog-actions">
+        <button class="btn" id="btn-reset">Reset today’s run</button>
+        <button class="btn btn--ghost" id="btn-wipe">Forget everything</button>
+      </div>
+      <p class="fineprint">Progress is stored in this browser only, and clears itself when the date changes.</p>
+    </section>
+
+    <footer class="dialog-foot">
+      <span id="about-line">The Daily Circuit</span>
+      <span>v1.0</span>
+    </footer>
+  </div>
+</dialog>
+
+<noscript>
+  <div class="noscript">
+    <h1>The Daily Circuit</h1>
+    <p>This page needs JavaScript for the scorecard and the embedded games. Here is the running order:</p>
+    <ol>
+      <li><a href="https://www.nytimes.com/games/wordle/index.html" rel="noopener">Wordle</a></li>
+      <li><a href="https://www.nytimes.com/games/connections" rel="noopener">Connections</a></li>
+      <li><a href="https://metazooa.com" rel="noopener">Metazooa</a></li>
+      <li><a href="https://flora.metazooa.com/" rel="noopener">Metaflora</a></li>
+      <li><a href="https://globle-game.com" rel="noopener">Globle</a></li>
+      <li><a href="https://globle.org/" rel="noopener">Globle (globle.org)</a></li>
+      <li><a href="https://worldlegame.io/" rel="noopener">Worldle</a></li>
+      <li><a href="https://mugglenet.com/games/hogwords/" rel="noopener">HogWords</a></li>
+      <li><a href="https://games.oec.world/en/tradle/" rel="noopener">Tradle</a></li>
+      <li><a href="https://episode.wtf" rel="noopener">Episode</a></li>
+      <li><a href="https://framed.wtf" rel="noopener">Framed</a></li>
+      <li><a href="https://flagsgame.net/" rel="noopener">Flags</a></li>
+      <li><a href="https://flagle.org" rel="noopener">Flagle</a></li>
+      <li><a href="https://anthropeum.com" rel="noopener">Anthropeum</a></li>
+      <li><a href="https://www.majoritygame.com/home" rel="noopener">Majority</a></li>
+      <li><a href="https://raddle.quest" rel="noopener">Raddle</a></li>
+      <li><a href="https://closeword.org" rel="noopener">CloseWord</a></li>
+    </ol>
+  </div>
+</noscript>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script src="assets/games.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>
