@@ -78,7 +78,7 @@ window.CIRCUIT_GAMES = [
     url: 'https://mugglenet.com/games/hogwords/',
     note: 'Wizarding word, six guesses',
     tag: 'Words',
-    width: 'narrow'
+    width: 'fit'
   },
   {
     id: 'tradle',
@@ -86,7 +86,7 @@ window.CIRCUIT_GAMES = [
     url: 'https://games.oec.world/en/tradle/',
     note: 'Guess the country from what it exports',
     tag: 'Economy',
-    width: 'narrow'
+    width: 'fit'
   },
   {
     id: 'episode',
@@ -94,7 +94,7 @@ window.CIRCUIT_GAMES = [
     url: 'https://episode.wtf',
     note: 'A TV show, revealed in stills',
     tag: 'Screen',
-    width: 'narrow'
+    width: 'fit'
   },
   {
     id: 'framed',
@@ -102,7 +102,7 @@ window.CIRCUIT_GAMES = [
     url: 'https://framed.wtf',
     note: 'A film, revealed in six frames',
     tag: 'Screen',
-    width: 'narrow'
+    width: 'fit'
   },
   {
     id: 'flagsgame',
@@ -118,7 +118,7 @@ window.CIRCUIT_GAMES = [
     url: 'https://flagle.org',
     note: 'Flag, uncovered square by square',
     tag: 'Geography',
-    width: 'narrow'
+    width: 'fit'
   },
   {
     id: 'anthropeum',
@@ -134,7 +134,7 @@ window.CIRCUIT_GAMES = [
     url: 'https://www.majoritygame.com/home',
     note: 'Guess what everyone else guessed',
     tag: 'Crowd',
-    width: 'narrow'
+    width: 'fit'
   },
   {
     id: 'raddle',
@@ -142,7 +142,7 @@ window.CIRCUIT_GAMES = [
     url: 'https://raddle.quest',
     note: 'Transform one word into another',
     tag: 'Words',
-    width: 'narrow'
+    width: 'fit'
   },
   {
     id: 'closeword',
@@ -150,6 +150,6 @@ window.CIRCUIT_GAMES = [
     url: 'https://closeword.org',
     note: 'Hunt the word by semantic heat',
     tag: 'Words',
-    width: 'narrow'
+    width: 'fit'
   }
 ];

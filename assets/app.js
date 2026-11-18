@@ -52,7 +52,7 @@
     settings: $('#btn-settings'),
     dialog: $('#dialog'),
     prefAuto: $('#pref-auto'),
-    prefFocus: $('#pref-focus'),
+    prefCompact: $('#pref-compact'),
     adWindow: $('#btn-ad-window'),
     reset: $('#btn-reset'),
     wipe: $('#btn-wipe'),
@@ -65,6 +65,19 @@
     back: $('#btn-back'),
     toast: $('#toast'),
     about: $('#about-line'),
+    btnMin: $('#btn-min'),
+    minibar: $('#minibar'),
+    btnExpand: $('#btn-expand'),
+    btnMinSettings: $('#btn-min-settings'),
+    miniNo: $('#mini-no'),
+    miniName: $('#mini-name'),
+    miniTally: $('#mini-tally'),
+    miniClock: $('#mini-clock'),
+    miniFill: $('#mini-fill'),
+    miniMark: $('#mini-mark'),
+    zoomOut: $('#btn-zoom-out'),
+    zoomIn: $('#btn-zoom-in'),
+    zoomLevel: $('#btn-zoom-reset'),
     seg: Array.prototype.slice.call(document.querySelectorAll('.seg button'))
   };
 
@@ -107,9 +120,10 @@
       finished: false,
       done: {},
       spent: {},
-      prefs: { autoOnClose: true, focus: false, width: 'fit' },
+      prefs: { autoOnClose: true, compact: false, width: 'fit' },
       widths: {},
-      modes: {}
+      modes: {},
+      zooms: {}
     };
   }
 
@@ -125,15 +139,19 @@
       state.spent = saved.spent && typeof saved.spent === 'object' ? saved.spent : {};
       state.widths = saved.widths && typeof saved.widths === 'object' ? saved.widths : {};
       state.modes = saved.modes && typeof saved.modes === 'object' ? saved.modes : {};
+      state.zooms = saved.zooms && typeof saved.zooms === 'object' ? saved.zooms : {};
+      // older versions stored a "focus" flag; it is now the collapsed header
+      if (saved.prefs && saved.prefs.focus && !saved.prefs.compact) state.prefs.compact = true;
+      delete state.prefs.focus;
       if (typeof state.index !== 'number' || state.index < 0 || state.index >= GAMES.length) state.index = 0;
       state.finished = !!state.finished;
       if (state.day !== todayKey()) {
-        var prefs = state.prefs, widths = state.widths, modes = state.modes, focus = state.prefs.focus;
+        var prefs = state.prefs, widths = state.widths, modes = state.modes, zooms = state.zooms;
         state = blankState();
         state.prefs = prefs;
-        state.prefs.focus = !!focus;
         state.widths = widths;
         state.modes = modes;
+        state.zooms = zooms;
       }
     }
   } catch (e) { /* private mode, bad JSON — start clean */ }
@@ -151,6 +169,24 @@
     var w = state.widths[g.id] || g.width || state.prefs.width || 'fit';
     return WIDTHS.indexOf(w) === -1 ? 'fit' : w;
   }
+
+  var ZOOMS = [0.5, 0.6, 0.67, 0.75, 0.8, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2];
+
+  function zoomOf(g) {
+    var z = Number(state.zooms[g.id]);
+    if (!isFinite(z) || z < ZOOMS[0] || z > ZOOMS[ZOOMS.length - 1]) return 1;
+    return z;
+  }
+
+  function zoomIndex(z) {
+    var best = 0;
+    for (var i = 0; i < ZOOMS.length; i++) {
+      if (Math.abs(ZOOMS[i] - z) < Math.abs(ZOOMS[best] - z)) best = i;
+    }
+    return best;
+  }
+
+  function zoomLabel(z) { return Math.round(z * 100) + '%'; }
 
   function doneCount() {
     return GAMES.reduce(function (n, g) { return n + (state.done[g.id] ? 1 : 0); }, 0);
@@ -240,6 +276,33 @@
     if (el.autoInline) el.autoInline.textContent = state.prefs.autoOnClose ? 'on' : 'off';
 
     paintRail();
+    paintMini();
+    paintZoom();
+  }
+
+  function paintMini() {
+    var g = GAMES[state.index];
+    if (!g || !el.minibar) return;
+    var total = GAMES.length;
+    el.miniNo.textContent = pad(state.index + 1);
+    el.miniName.textContent = g.name;
+    el.miniTally.textContent = pad(doneCount()) + '/' + total;
+    el.miniClock.textContent = fmtTime(totalSeconds());
+    el.miniFill.style.width = ((doneCount() / total) * 100) + '%';
+    el.miniMark.style.left = (((state.index + 1) / total) * 100) + '%';
+  }
+
+  function paintZoom() {
+    var g = GAMES[state.index];
+    if (!g) return;
+    var z = zoomOf(g);
+    var i = zoomIndex(z);
+    var tab = modeOf(g) === 'tab';
+    el.zoomLevel.textContent = zoomLabel(z);
+    el.zoomLevel.setAttribute('aria-label', 'Reset zoom (currently ' + zoomLabel(z) + ')');
+    el.zoomOut.disabled = tab || i === 0;
+    el.zoomIn.disabled = tab || i === ZOOMS.length - 1;
+    el.zoomLevel.disabled = tab;
   }
 
   /* ---------- frame lifecycle ---------- */
@@ -329,6 +392,7 @@
 
     el.shell.dataset.width = width;
     el.shell.dataset.mode = mode;
+    el.shell.style.setProperty('--z', String(zoomOf(g)));
 
     el.seg.forEach(function (b) {
       b.setAttribute('aria-pressed', b.dataset.width === width ? 'true' : 'false');
@@ -344,11 +408,6 @@
   }
 
   /* ---------- navigation ---------- */
-
-  function applyFocusMode() {
-    el.body.classList.toggle('focus', !!state.prefs.focus);
-    if (el.prefFocus) el.prefFocus.checked = !!state.prefs.focus;
-  }
 
   function setHash(id) {
     var target = '#' + id;
@@ -554,11 +613,50 @@
     }, 40);
   }
 
-  function toggleFocus() {
-    state.prefs.focus = !state.prefs.focus;
+  function setZoom(z, opts) {
+    var g = GAMES[state.index];
+    z = Math.min(ZOOMS[ZOOMS.length - 1], Math.max(ZOOMS[0], z));
+    state.zooms[g.id] = z;
     save();
-    applyFocusMode();
-    toast(state.prefs.focus ? 'Focus mode on — press F to bring the chrome back' : 'Chrome restored');
+    el.shell.style.setProperty('--z', String(z));
+    paintZoom();
+    if (!opts || !opts.silent) toast('Zoom ' + zoomLabel(z));
+  }
+
+  function stepZoom(dir) {
+    var g = GAMES[state.index];
+    var i = zoomIndex(zoomOf(g));
+    var next = Math.min(ZOOMS.length - 1, Math.max(0, i + dir));
+    if (next === i) {
+      toast(dir > 0 ? 'Maximum zoom' : 'Minimum zoom');
+      return;
+    }
+    setZoom(ZOOMS[next]);
+  }
+
+  function resetZoom() {
+    setZoom(1);
+  }
+
+  /* ---------- collapsed header ---------- */
+  function applyCompact() {
+    var on = !!state.prefs.compact;
+    el.body.classList.toggle('compact', on);
+    if (el.minibar) el.minibar.hidden = !on;
+    if (el.prefCompact) el.prefCompact.checked = on;
+    if (el.btnMin) el.btnMin.setAttribute('aria-pressed', on ? 'true' : 'false');
+  }
+
+  function setCompact(on, opts) {
+    state.prefs.compact = !!on;
+    save();
+    applyCompact();
+    paintMini();
+    if (!opts || !opts.silent) toast(on ? 'Header minimized' : 'Header restored');
+  }
+
+  function toggleCompact() {
+    setCompact(!state.prefs.compact);
   }
 
   /* ---------- auto-advance pref ---------- */
@@ -575,10 +673,12 @@
     var prefs = state.prefs;
     var widths = state.widths;
     var modes = state.modes;
+    var zooms = state.zooms;
     state = blankState();
     state.prefs = prefs;
     state.widths = widths;
     state.modes = modes;
+    state.zooms = zooms;
     save();
     goTo(0, { via: 'reset' });
     if (!silent) toast('Fresh run');
@@ -632,10 +732,13 @@
     if (k === 'e' || k === 'E') { e.preventDefault(); toggleMode(); return; }
     if (k === 'r' || k === 'R') { e.preventDefault(); reloadGame(); return; }
     if (k === 'w' || k === 'W') { e.preventDefault(); cycleWidth(); return; }
-    if (k === 'f' || k === 'F') { e.preventDefault(); toggleFocus(); return; }
+    if (k === 'm' || k === 'M' || k === 'f' || k === 'F') { e.preventDefault(); toggleCompact(); return; }
+    if (k === '+' || k === '=') { e.preventDefault(); stepZoom(1); return; }
+    if (k === '-' || k === '_') { e.preventDefault(); stepZoom(-1); return; }
+    if (k === '0') { e.preventDefault(); resetZoom(); return; }
     if (k === '?') { e.preventDefault(); openDialog(); return; }
     if (k === 'Escape') {
-      if (state.prefs.focus) toggleFocus();
+      if (state.prefs.compact) setCompact(false);
       return;
     }
     if (/^[1-9]$/.test(k)) {
@@ -648,7 +751,7 @@
   /* ---------- dialog ---------- */
   function openDialog() {
     el.prefAuto.checked = !!state.prefs.autoOnClose;
-    if (el.prefFocus) el.prefFocus.checked = !!state.prefs.focus;
+    if (el.prefCompact) el.prefCompact.checked = !!state.prefs.compact;
     el.dialog.showModal();
   }
 
@@ -661,11 +764,9 @@
       openInWindow();
     });
   }
-  if (el.prefFocus) {
-    el.prefFocus.addEventListener('change', function () {
-      state.prefs.focus = el.prefFocus.checked;
-      save();
-      applyFocusMode();
+  if (el.prefCompact) {
+    el.prefCompact.addEventListener('change', function () {
+      setCompact(el.prefCompact.checked, { silent: true });
     });
   }
 
@@ -679,7 +780,7 @@
     if (!window.confirm('Forget all saved progress, widths, and settings?')) return;
     try { localStorage.removeItem(STORE_KEY); } catch (e) { /* ignore */ }
     state = blankState();
-    applyFocusMode();
+    applyCompact();
     goTo(0, { via: 'reset' });
     toast('All saved data cleared');
   });
@@ -693,6 +794,13 @@
   el.launch.addEventListener('click', openInWindow);
   el.autoInline.addEventListener('click', function () { setAuto(!state.prefs.autoOnClose); });
   el.autoPill.addEventListener('click', function () { setAuto(!state.prefs.autoOnClose); });
+
+  el.btnMin.addEventListener('click', function () { setCompact(true); });
+  el.btnExpand.addEventListener('click', function () { setCompact(false); });
+  el.btnMinSettings.addEventListener('click', openDialog);
+  el.zoomOut.addEventListener('click', function () { stepZoom(-1); });
+  el.zoomIn.addEventListener('click', function () { stepZoom(1); });
+  el.zoomLevel.addEventListener('click', resetZoom);
   el.seg.forEach(function (b) {
     b.addEventListener('click', function () { setWidth(b.dataset.width); });
   });
@@ -729,7 +837,7 @@
     }
 
     dateline();
-    applyFocusMode();
+    applyCompact();
     buildRail();
     paintChrome();
 
@@ -740,7 +848,7 @@
       goTo(i >= 0 ? i : Math.min(state.index, GAMES.length - 1), { via: 'boot' });
     }
 
-    if (state.prefs.focus) toast('Focus mode — press F for the chrome');
+    if (state.prefs.compact) toast('Header minimized — press M to restore');
   }
 
   boot();

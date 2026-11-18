@@ -379,6 +379,55 @@ kbd {
   color: var(--card);
 }
 
+
+/* zoom control ----------------------------------------------- */
+.zoom {
+  display: inline-flex;
+  align-items: stretch;
+  border: 1px solid var(--ink);
+  border-radius: 1px;
+  overflow: hidden;
+  background: var(--card);
+  height: 32px;
+}
+
+.zoom button {
+  appearance: none;
+  border: 0;
+  border-right: 1px solid var(--rule);
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.zoom button:last-child { border-right: 0; }
+.zoom button:hover { background: var(--stone); }
+
+.zoom-btn {
+  width: 26px;
+  font: 500 15px/1 var(--mono);
+  padding: 0 0 1px;
+}
+
+.zoom-level {
+  min-width: 46px;
+  padding: 0 6px;
+  font: 500 9px/1 var(--mono);
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-2);
+}
+
+.zoom-level:hover { color: var(--ink); }
+
+.zoom button[disabled] { opacity: 0.3; cursor: default; pointer-events: none; }
+
+.zoom button:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: -3px;
+}
+
 /* buttons ---------------------------------------------------- */
 .btn {
   appearance: none;
@@ -486,10 +535,12 @@ kbd {
 
 /* the game window -------------------------------------------- */
 .frame-shell {
+  --z: 1;
   position: relative;
   flex: 1 1 auto;
   min-height: 240px;
   display: flex;
+  align-items: center;
   justify-content: center;
   border: 1px solid var(--ink);
   border-radius: 2px;
@@ -500,17 +551,23 @@ kbd {
 
 .frame-shell iframe[hidden] { display: none; }
 
+/* Zoom: lay the frame out at 1/z of the box, then scale it back up.
+   The embedded page sees a smaller (or larger) viewport, exactly like
+   browser zoom, and stays crisp because it rasterises at the new scale. */
 .frame-shell iframe {
   display: block;
-  width: 100%;
-  height: 100%;
-  max-width: 1600px;
+  flex: 0 0 auto;
+  width: calc(100% / var(--z));
+  height: calc(100% / var(--z));
+  max-width: calc(1600px / var(--z));
   border: 0;
   background: #fff;
+  transform: scale(var(--z));
+  transform-origin: center center;
 }
 
 .frame-shell[data-width="narrow"] iframe {
-  max-width: 560px;
+  max-width: calc(560px / var(--z));
   border-left: 1px solid var(--rule);
   border-right: 1px solid var(--rule);
 }
@@ -1064,12 +1121,143 @@ kbd {
 .noscript a:visited { color: var(--ink-2); }
 .noscript a:hover { text-decoration-color: var(--marker); }
 
-/* focus mode ------------------------------------------------ */
-body.focus .masthead,
-body.focus .rail,
-body.focus .stage-foot { display: none; }
+/* collapsed header ------------------------------------------ */
+body.compact .masthead,
+body.compact .rail { display: none; }
 
-body.focus .stage { padding-top: 9px; }
+.minibar {
+  flex: 0 0 auto;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 34px;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--rule);
+  background: var(--stone);
+  z-index: 3;
+}
+
+.minibar[hidden] { display: none; }
+
+.minibar-toggle,
+.minibar-gear {
+  appearance: none;
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 1px;
+  background: transparent;
+  color: var(--ink-2);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background-color 0.15s;
+}
+
+.minibar-toggle:hover,
+.minibar-gear:hover {
+  color: var(--ink);
+  border-color: var(--ink);
+  background: var(--card);
+}
+
+.minibar-toggle svg,
+.minibar-gear svg {
+  width: 13px;
+  height: 13px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.minibar-brand {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 10.5px;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.minibar-stage {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+  border-left: 1px solid var(--rule);
+  padding-left: 9px;
+  font: 500 10px/1 var(--mono);
+  color: var(--ink-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.minibar-stage b {
+  font-weight: 600;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.minibar-stage span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.minibar-spacer { flex: 1 1 auto; }
+
+.minibar-tally {
+  font: 600 10px/1 var(--mono);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.minibar-clock {
+  font: 500 10px/1 var(--mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+
+.minibar-progress {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  background: var(--rule);
+  overflow: hidden;
+}
+
+.minibar-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 0;
+  background: var(--ink);
+  transition: width 0.25s ease;
+}
+
+.minibar-mark {
+  position: absolute;
+  top: -1px;
+  bottom: -1px;
+  width: 8px;
+  margin-left: -4px;
+  background: var(--marker);
+  transition: left 0.25s ease;
+}
+
+.minibar-toggle:focus-visible,
+.minibar-gear:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 1px;
+}
 
 /* responsive ------------------------------------------------ */
 @media (max-width: 1080px) {
@@ -1101,12 +1289,19 @@ body.focus .stage { padding-top: 9px; }
   .rail button { height: 22px; }
   .rail .tick { width: 14px; height: 14px; }
 
+  .zoom-level { min-width: 42px; }
+
   .stamps { columns: 1; }
 }
 
 @media (max-width: 620px) {
   .masthead { padding-top: 9px; padding-bottom: 8px; }
   .readout--time { display: none; }
+  .minibar { gap: 8px; padding: 0 8px; }
+  .minibar-brand, .minibar-clock { display: none; }
+  .minibar-stage { border-left: 0; padding-left: 0; }
+  .zoom-level { min-width: 38px; }
+  .zoom-btn { width: 24px; }
   .stage-note { font-size: 11px; }
   .stage-host, .stage-note .sep { display: none; }
   .foot-hint { display: none; }
