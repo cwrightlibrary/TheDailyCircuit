@@ -83,6 +83,18 @@ Turn the window-close behaviour off in **Setup & shortcuts** (gear icon, or `?`)
 the run total is the sum. The rail is the scorecard: the current game is highlighted,
 finished ones get a check. The finish card only appears after the seventeenth game.
 
+**Getting the game out of the way.** The chevron in the masthead collapses the header and
+the scorecard into a 34 px bar with the current game, the tally, and a progress line —
+about 74 px more height for the game, and one click to bring it back. The choice is
+remembered. `M` (or `F`) does the same from the keyboard.
+
+**Zoom.** The `− 100% +` control next to the width switch scales the game between 50% and
+200%. It is true zoom rather than a magnifying glass: the embedded page is laid out at a
+smaller or larger viewport and scaled back to the frame, so text stays crisp, the layout
+reflows, and clicks and scrolling land where they look like they land. Zoom is remembered
+per game, and clicking the percentage resets it. It is disabled for games that open in
+their own window, where the browser's own zoom applies.
+
 ---
 
 ## Keyboard
@@ -95,13 +107,15 @@ finished ones get a check. The finish card only appears after the seventeenth ga
 | `E` | Switch between embedded and own window (remembered per game) |
 | `R` | Reload the game |
 | `W` | Cycle frame width: fit → narrow → wide |
-| `F` | Focus mode — hides everything but the game |
+| `+` / `−` | Zoom the game in / out (50%–200%) |
+| `0` | Reset zoom to 100% |
+| `M` (or `F`) | Minimize / restore the header |
 | `1`–`9` | Jump to a game |
 | `?` | Setup and shortcuts |
-| `Esc` | Close the panel / leave focus mode |
+| `Esc` | Close the panel, or restore a minimized header |
 
 Keys apply when the page itself has focus. Once you click into an embedded game, its
-own keyboard handling takes over; click the grey margin (or press `F` twice) to get the
+own keyboard handling takes over; click the grey margin (or press `M` twice) to get the
 page's keys back.
 
 ## Editing the running order
@@ -126,6 +140,44 @@ rail, the `/17` counters, and the finish card automatically.
 **If a game stops embedding**, either add `mode: 'tab'` in `games.js` or press `E` while
 on that game — the choice is remembered. If it shows a blank frame, the site has started
 sending a framing header; `E` is the fix.
+
+## Ads and ad blockers
+
+An embedded game is another origin’s document, so this page cannot read it, restyle it, or
+filter its requests. Anything the game loads — including ads — loads. There is no setting in
+this shell that removes them, and a static page has no way to gain that power without proxying
+the site, which would break its sign-in, storage, and terms.
+
+What that means in practice: **ad blockers decide whether to run per top-level page**, then
+apply their rules to every frame in it. If a game shows ads here but not when visited
+directly, the blocker is not running on *this* page. Usual suspects:
+
+- **`file://`** — opening `index.html` by double-clicking. Most extensions are off for file
+  URLs until you grant access (uBlock Origin: *Allow access to file URLs* in the extension’s
+  details page). Serving over `http://127.0.0.1` or the real host fixes it.
+- **Local addresses** — Brave Shields start down for localhost, and Safari’s per-site settings
+  can leave blockers off for an address you have never configured.
+- **Paused / allowlisted** — check the blocker’s badge on this page, not on the game.
+- **Sparse filter lists** — several of these games run the Ezoic stack (`ezodn.com`,
+  `ezoic.net`, `ezojs.com`) plus Prebid partners and `ccgateway.net`. Standard lists cover
+  them; a small or regional list may not. If yours misses them, these rules in uBlock Origin
+  (My filters) or AdGuard (User rules) close the gap:
+
+  ```
+  ||ezodn.com^
+  ||ezoic.net^
+  ||ezojs.com^
+  ||ccgateway.net^
+  ```
+
+  Blocking a game’s ad network can also disable ad-gated extras such as rewarded hints.
+
+This was measured, not assumed: the embedded frame makes the same ad requests as a direct
+visit (Ezoic, DoubleClick, OpenX, Criteo, ID5, and friends), so the frame is not the cause.
+
+If you would rather not depend on the blocker, open the game in its own window — `E`, `O`,
+the arrow button, or **Setup & shortcuts → Ads → Open this game in its own window**. That is a
+real top-level tab, filtered exactly like a direct visit, and the choice is remembered per game.
 
 ## Notes and limits
 

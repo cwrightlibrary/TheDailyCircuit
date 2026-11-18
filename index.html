@@ -31,6 +31,9 @@
       <span class="readout-num readout-clock" id="clock">0:00</span>
       <span class="readout-label">run</span>
     </div>
+    <button class="btn btn--icon" id="btn-min" aria-label="Minimize header" title="Minimize header (M)">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.5 14.5 12 8l6.5 6.5"/></svg>
+    </button>
     <button class="btn btn--icon btn--settings" id="btn-settings" aria-label="Setup and keyboard shortcuts" title="Setup &amp; shortcuts (?)">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
         <circle cx="12" cy="12" r="3.1"></circle>
@@ -43,6 +46,27 @@
 <nav class="rail" aria-label="Jump to a game">
   <ol id="rail"></ol>
 </nav>
+
+<div class="minibar" id="minibar" hidden>
+  <button class="minibar-toggle" id="btn-expand" aria-label="Restore header" title="Restore header (M)">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.5 9.5 12 16l6.5-6.5"/></svg>
+  </button>
+  <span class="minibar-brand">The Daily Circuit</span>
+  <span class="minibar-stage"><b id="mini-no">01</b><span id="mini-name">Loading</span></span>
+  <span class="minibar-spacer"></span>
+  <span class="minibar-tally" id="mini-tally">00/17</span>
+  <span class="minibar-clock" id="mini-clock">0:00</span>
+  <button class="minibar-gear" id="btn-min-settings" aria-label="Setup and keyboard shortcuts" title="Setup &amp; shortcuts">
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="12" cy="12" r="3.1"></circle>
+      <path d="M12 2.6v2.3M12 19.1v2.3M21.4 12h-2.3M4.9 12H2.6M18.6 5.4l-1.6 1.6M7 17l-1.6 1.6M18.6 18.6 17 17M7 7 5.4 5.4"></path>
+    </svg>
+  </button>
+  <div class="minibar-progress" aria-hidden="true">
+    <span class="minibar-fill" id="mini-fill"></span>
+    <span class="minibar-mark" id="mini-mark"></span>
+  </div>
+</div>
 
 <main class="stage" id="stage">
   <div class="stage-head">
@@ -70,6 +94,11 @@
         <button type="button" data-width="narrow" title="Narrow column (W)">Narrow</button>
         <button type="button" data-width="wide" title="Edge to edge (W)">Wide</button>
       </div>
+      <div class="zoom" role="group" aria-label="Game zoom">
+        <button type="button" class="zoom-btn" id="btn-zoom-out" aria-label="Zoom out" title="Zoom out (−)">−</button>
+        <button type="button" class="zoom-level" id="btn-zoom-reset" title="Reset zoom to 100%">100%</button>
+        <button type="button" class="zoom-btn" id="btn-zoom-in" aria-label="Zoom in" title="Zoom in (+)">+</button>
+      </div>
       <button class="btn btn--icon" id="btn-reload" aria-label="Reload game" title="Reload (R)">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.2 12a8.2 8.2 0 1 1-2.4-5.8"/><path d="M20.2 3.9v4.6h-4.6"/></svg>
       </button>
@@ -77,7 +106,7 @@
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.6 16.4 16.6 7.4"/><path d="M9.4 7.4h7.2v7.2"/></svg>
       </button>
       <button class="btn btn--icon" id="btn-mode" aria-label="Switch between embedded and separate window" title="Embedded / window (E)">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.2" y="3.2" width="12.4" height="12.4" rx="0.6"/><path d="M8.4 20.8h12.4V8.4H8.4z"/></svg>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="1.2"/><path d="M3 8.6h18"/></svg>
       </button>
     </div>
 
@@ -118,8 +147,8 @@
   <div class="stage-foot">
     <p class="foot-hint">
       <kbd>←</kbd><kbd>→</kbd> move
-      <span class="sep" aria-hidden="true">/</span> <kbd>O</kbd> open
-      <span class="sep" aria-hidden="true">/</span> <kbd>F</kbd> focus
+      <span class="sep" aria-hidden="true">/</span> <kbd>−</kbd><kbd>+</kbd> zoom
+      <span class="sep" aria-hidden="true">/</span> <kbd>M</kbd> header
       <span class="sep" aria-hidden="true">/</span> <kbd>?</kbd> keys
     </p>
     <button class="auto-pill" id="auto-pill" aria-pressed="true">
@@ -161,10 +190,10 @@
         </span>
       </label>
       <label class="check check--second">
-        <input type="checkbox" id="pref-focus">
+        <input type="checkbox" id="pref-compact">
         <span>
-          <strong>Focus mode</strong>
-          <em>Hide everything but the game and the arrows. Press <kbd>F</kbd> to toggle from anywhere.</em>
+          <strong>Minimize the header</strong>
+          <em>Collapse the masthead and scorecard into a thin bar so the game gets the height. Press <kbd>M</kbd> from anywhere, or <kbd>F</kbd>.</em>
         </span>
       </label>
       <p class="fineprint">
@@ -172,6 +201,20 @@
         you have finished one. Embedded rounds advance when you press <kbd>→</kbd> — one keystroke
         instead of a tab hunt.
       </p>
+    </section>
+
+    <section class="dialog-section">
+      <h3>Ads</h3>
+      <p class="fineprint">
+        These games are other people’s sites. This page cannot remove what they load, and no
+        setting here can. Ad blockers decide whether to run per <em>top-level page</em>, so check
+        the blocker’s badge on this page: extensions are off by default for
+        <code>file://</code> pages, and some (Brave Shields, Safari per-site settings) are paused
+        on local addresses. A game opened in its own window is filtered exactly like a direct visit.
+      </p>
+      <div class="dialog-actions dialog-actions--top">
+        <button class="btn" id="btn-ad-window">Open this game in its own window</button>
+      </div>
     </section>
 
     <section class="dialog-section">
@@ -183,7 +226,9 @@
         <dt><kbd>E</kbd></dt><dd>Switch embedded / window</dd>
         <dt><kbd>R</kbd></dt><dd>Reload the game</dd>
         <dt><kbd>W</kbd></dt><dd>Cycle frame width</dd>
-        <dt><kbd>F</kbd></dt><dd>Focus mode</dd>
+        <dt><kbd>+</kbd> / <kbd>−</kbd></dt><dd>Zoom the game in / out</dd>
+        <dt><kbd>0</kbd></dt><dd>Reset zoom to 100%</dd>
+        <dt><kbd>M</kbd></dt><dd>Minimize / restore the header</dd>
         <dt><kbd>1</kbd>–<kbd>9</kbd></dt><dd>Jump to game 1–9</dd>
         <dt><kbd>Esc</kbd></dt><dd>Close this panel</dd>
       </dl>
